@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <iomanip>
+// include the libs based on the OS
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -9,7 +10,7 @@
 #endif // _WIN32
 
 using namespace std;
-void clearscr()
+void clearscr() // Cross-platform clear screen function
 {
 #ifdef _WIN32
     system("cls");
@@ -17,15 +18,7 @@ void clearscr()
     system("clear");
 #endif // _WIN32
 }
-
-struct SnakeSegment
-{
-    int x;
-    int y;
-    SnakeSegment *next;
-};
-
-void sleep(int milliseconds) // Cross-platform sleep function
+void mysleep(int milliseconds) // Cross-platform sleep function
 {
 #ifdef _WIN32
     Sleep(milliseconds);
@@ -33,6 +26,12 @@ void sleep(int milliseconds) // Cross-platform sleep function
     usleep(milliseconds * 1000);
 #endif // _WIN32
 }
+struct SnakeSegment
+{
+    int x;
+    int y;
+    SnakeSegment *next;
+};
 
 // Ik a structure would suffice, but let the classes be
 class Fruit
@@ -63,30 +62,67 @@ class Snake
 {
 private:
     SnakeSegment *snakehead;
-
+    char direction=' ';
 public:
     Snake()
     {
-        SnakeSegment *_snakehead = new SnakeSegment{10, 10};
-        SnakeSegment *snakeseg1 = new SnakeSegment{9, 10};
-        SnakeSegment *snakeseg2 = new SnakeSegment{8, 10};
-        _snakehead->next = snakeseg1;
+        this->snakehead = new SnakeSegment{10, 10, nullptr};
+        SnakeSegment *snakeseg1 = new SnakeSegment{9, 10, nullptr};
+        SnakeSegment *snakeseg2 = new SnakeSegment{8, 10, nullptr};
+        this->snakehead->next = snakeseg1;
         snakeseg1->next = snakeseg2;
-        snakeseg2->next = NULL;
-        this->snakehead = _snakehead;
+        snakeseg2->next = nullptr;
+        this->direction='r';
     }
 
     SnakeSegment *head() { return this->snakehead; }
+    
+    bool is_alive(int l, int h){
+        if(this->snakehead->x==0 || this->snakehead->x==l-1|| this->snakehead->y==h-1 || this->snakehead->y==0){
+            return false;
+        }
+        SnakeSegment *current = this->snakehead;
+        while (current->next!=nullptr)
+        {
+            if(this->direction=='r' && (current->x==this->snakehead->x+1)){
+                return false;
+            }
+            else if (this->direction=='l' && (current->x==this->snakehead->x-1)) 
+            {
+                return false;
+            }
+            current=current->next;
+        }
+        return true;
+    }
+
 
     void Right()
     {
+        this->direction='r';
         this->snakehead->x++;
-        SnakeSegment *seg = this->snakehead;
-        do
+    }
+
+    void Left()
+    {
+        this->direction='l';
+        this->snakehead->x--;
+    }
+    //Idk why, but it got reversed, I'll try to fix it later
+    void Down(){
+        this->direction='d';
+        this->snakehead->y++;
+    }
+    void Up(){
+        this->direction='u';
+        this->snakehead->y--;
+    }
+    void Follow()
+    {
+        SnakeSegment *current = this->snakehead->next;
+        while (current->next != nullptr)
         {
-            seg = seg->next;
-            seg->x++;
-        } while (seg->next != NULL);
+        }
     }
 };
 
@@ -148,24 +184,34 @@ public:
     int length() { return this->l; }
 };
 
-int main()
-{
+int main() {
     srand(static_cast<unsigned int>(time(0)));
     int size = 25;
+
     // Create the game map
     GameMap game = GameMap(size);
 
     // Initialize the snake
     Snake *snake = new Snake();
 
+    // Initialize the fruit
+    Fruit f = Fruit(size);
+
     // Game Mainloop
-    for (int i = 0; i < 10; i++)
-    {
-        Fruit f = Fruit(size);
+    for (int i = 0; i < 300; i++) {
+        clearscr();
+        if (!snake->is_alive(game.length(), game.height())) {
+            cout << "Game over" << endl;
+            break;
+        }
         cout << f.getX() << " " << f.getY() << endl;
         game.ShowFrame(snake->head(), f);
-        snake->Right();
-        sleep(500);
-        clearscr();
+        snake->Down();
+        mysleep(200);
     }
+
+    // Free allocated memory for snake
+    delete snake;
+
+    return 0;
 }

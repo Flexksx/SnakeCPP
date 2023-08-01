@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "SnakeGame",
+            "request": "launch",
+            "mainClass": "SnakeGame",
+            "projectName": "cpp_7df45498"
+        }
+    ]
+}
