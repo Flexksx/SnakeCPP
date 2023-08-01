@@ -206,7 +206,7 @@ int main() {
         }
         cout << f.getX() << " " << f.getY() << endl;
         game.ShowFrame(snake->head(), f);
-        snake->Down();
+        snake->Left();
         mysleep(200);
     }
 
