@@ -3,6 +3,7 @@
         "*.ejs": "html",
         "iomanip": "cpp",
         "new": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "ctime": "cpp"
     }
 }

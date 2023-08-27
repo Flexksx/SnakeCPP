@@ -2,12 +2,59 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <iomanip>
-// include the libs based on the OS
+#include </home/cristi/Documents/Code/cpp/Snake.cpp>
+#include <ctime>  // Include <ctime> for time() function
 #ifdef _WIN32
+#include <conio.h>
 #include <windows.h>
 #else
 #include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
 #endif // _WIN32
+
+
+bool kbhit() {
+#ifdef _WIN32
+    return _kbhit();
+#else
+    struct termios oldt, newt;
+    int ch;
+    int oldf;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
+    if (ch != EOF) {
+        ungetc(ch, stdin);
+        return true;
+    }
+    return false;
+#endif // _WIN32
+}
+
+char getkey() {
+#ifdef _WIN32
+    return _getch();
+#else
+    struct termios oldt, newt;
+    char ch;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    ch = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return ch;
+#endif // _WIN32
+}
+
+
 
 using namespace std;
 void clearscr() // Cross-platform clear screen function
@@ -26,12 +73,6 @@ void mysleep(int milliseconds) // Cross-platform sleep function
     usleep(milliseconds * 1000);
 #endif // _WIN32
 }
-struct SnakeSegment
-{
-    int x;
-    int y;
-    SnakeSegment *next;
-};
 
 // Ik a structure would suffice, but let the classes be
 class Fruit
@@ -58,73 +99,7 @@ public:
     int getY() { return this->y; }
 };
 
-class Snake
-{
-private:
-    SnakeSegment *snakehead;
-    char direction=' ';
-public:
-    Snake()
-    {
-        this->snakehead = new SnakeSegment{10, 10, nullptr};
-        SnakeSegment *snakeseg1 = new SnakeSegment{9, 10, nullptr};
-        SnakeSegment *snakeseg2 = new SnakeSegment{8, 10, nullptr};
-        this->snakehead->next = snakeseg1;
-        snakeseg1->next = snakeseg2;
-        snakeseg2->next = nullptr;
-        this->direction='r';
-    }
 
-    SnakeSegment *head() { return this->snakehead; }
-    
-    bool is_alive(int l, int h){
-        if(this->snakehead->x==0 || this->snakehead->x==l-1|| this->snakehead->y==h-1 || this->snakehead->y==0){
-            return false;
-        }
-        SnakeSegment *current = this->snakehead;
-        while (current->next!=nullptr)
-        {
-            if(this->direction=='r' && (current->x==this->snakehead->x+1)){
-                return false;
-            }
-            else if (this->direction=='l' && (current->x==this->snakehead->x-1)) 
-            {
-                return false;
-            }
-            current=current->next;
-        }
-        return true;
-    }
-
-
-    void Right()
-    {
-        this->direction='r';
-        this->snakehead->x++;
-    }
-
-    void Left()
-    {
-        this->direction='l';
-        this->snakehead->x--;
-    }
-    //Idk why, but it got reversed, I'll try to fix it later
-    void Down(){
-        this->direction='d';
-        this->snakehead->y++;
-    }
-    void Up(){
-        this->direction='u';
-        this->snakehead->y--;
-    }
-    void Follow()
-    {
-        SnakeSegment *current = this->snakehead->next;
-        while (current->next != nullptr)
-        {
-        }
-    }
-};
 
 class GameMap
 {
@@ -191,6 +166,10 @@ int main() {
     // Create the game map
     GameMap game = GameMap(size);
 
+    //Rules
+    cout<<"Control with W-up, S-down, D-right, A-left. Press Q to quit."<<endl;
+
+
     // Initialize the snake
     Snake *snake = new Snake();
 
@@ -204,9 +183,29 @@ int main() {
             cout << "Game over" << endl;
             break;
         }
+        if (kbhit()) {
+        char input = getkey();
+        switch (input) {
+            case 'w':
+                snake->Up();
+                break;
+            case 's':
+                snake->Down();
+                break;
+            case 'a':
+                snake->Left();
+                break;
+            case 'd':
+                snake->Right();
+                break;
+            case 'q':
+                cout<<"Game quit."<<endl;
+                return 1;
+                break;
+        }
+    }
         cout << f.getX() << " " << f.getY() << endl;
         game.ShowFrame(snake->head(), f);
-        snake->Left();
         mysleep(200);
     }
 
